@@ -27,9 +27,21 @@ io.on("connection", (socket) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
     });
+    
     socket.on("respuestaJuegoDeCuestionario", (alumno) => {
         console.log("Notifica respuesta a juego de cuestionario el alumno " + alumno.id);
         dashSocket.emit ("respuestaJuegoDeCuestionario", alumno);
+
+    });
+    
+    socket.on("modificacionAvatar", (res) => {
+        console.log("Notifica cambio en avatar ", res);
+        dashSocket.emit ("modificacionAvatar", res);
+
+    });
+    socket.on("notificarVotacion", (res) => {
+        console.log("Notifica votacion ");
+        dashSocket.emit ("notificarVotacion", res);
 
     });
 });
