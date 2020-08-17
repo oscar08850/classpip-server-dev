@@ -44,6 +44,11 @@ io.on("connection", (socket) => {
         dashSocket.emit ("notificarVotacion", res);
 
     });
+    socket.on("notificarVotaciones", (res) => {
+        console.log("Notifica votaciones ");
+        dashSocket.emit ("notificarVotaciones", res);
+
+    });
 });
 
 server.listen(port, () => {

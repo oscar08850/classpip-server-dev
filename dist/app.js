@@ -37,6 +37,10 @@ io.on("connection", (socket) => {
         console.log("Notifica votacion ");
         dashSocket.emit("notificarVotacion", res);
     });
+    socket.on("notificarVotaciones", (res) => {
+        console.log("Notifica votaciones ");
+        dashSocket.emit("notificarVotaciones", res);
+    });
 });
 server.listen(port, () => {
     console.log(`started on port: ${port}`);
