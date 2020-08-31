@@ -25,6 +25,9 @@ io.on("connection", (socket) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
     });
+    socket.on("usuarioConectado", (nombre) => {
+        console.log("Se conecta:  " + nombre);
+    });
     socket.on("respuestaJuegoDeCuestionario", (alumno) => {
         console.log("Notifica respuesta a juego de cuestionario el alumno " + alumno.id);
         dashSocket.emit("respuestaJuegoDeCuestionario", alumno);
@@ -40,6 +43,12 @@ io.on("connection", (socket) => {
     socket.on("notificarVotaciones", (res) => {
         console.log("Notifica votaciones ");
         dashSocket.emit("notificarVotaciones", res);
+    });
+    socket.on("usuarioDesconectado", (nombre) => {
+        console.log("Se desconecta:  " + nombre);
+    });
+    socket.on("'disconnect'", (res) => {
+        console.log("Se desconecta el cliente ");
     });
 });
 server.listen(port, () => {

@@ -27,6 +27,9 @@ io.on("connection", (socket) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
     });
+    socket.on("usuarioConectado", (nombre) => {
+        console.log("Se conecta:  " + nombre);
+    });
     
     socket.on("respuestaJuegoDeCuestionario", (alumno) => {
         console.log("Notifica respuesta a juego de cuestionario el alumno " + alumno.id);
@@ -49,6 +52,14 @@ io.on("connection", (socket) => {
         dashSocket.emit ("notificarVotaciones", res);
 
     });
+    socket.on("usuarioDesconectado", (nombre) => {
+        console.log("Se desconecta:  " + nombre);
+    });
+    socket.on("'disconnect'", (res) => {
+        console.log("Se desconecta el cliente ");
+
+    });
+
 });
 
 server.listen(port, () => {
