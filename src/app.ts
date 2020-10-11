@@ -12,14 +12,35 @@
 import axios from "axios";
 import express from "express";
 import http from "http";
+import {EnviarEmailService} from "./enviarEmail";
 import {PeticionesAPIService} from "./peticionesAPI";
+
 // tslint:disable-next-line:ordered-imports
 import socketIO from "socket.io";
 
+
+
+// const configMensaje = require('./);
+const cors = require('cors');
+const bodyParser = require('body-parser');
+// const configMensaje = require('./configMensaje');
+
+
+
+
+
+
+
+
 const app = express();
+
+app.use(bodyParser.json());
+app.use(cors());
+
 const server = new http.Server(app);
 const io = socketIO(server);
 const peticionesAPI = new PeticionesAPIService();
+const enviarEmail = new EnviarEmailService();
 
 const port = 8080;
 
@@ -49,16 +70,22 @@ io.on("connection", (socket) => {
     console.log("user connected");
     console.log("Conectados:  ");
     console.log (conectados);
+    socket.on("forceDisconnect", () => {
+        socket.disconnect();
+    });
+
     socket.on("dash", (message) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
-
     });
     socket.on("usuarioConectado", (conectado) => {
         console.log("Se conecta:  " + conectado.Nombre + " " + conectado.PrimerApellido);
         conectados.push ({id: conectado.id, soc: socket});
         console.log("Conectados:  ");
         console.log (conectados);
+    });
+    socket.on("recordarContraseña", (datos) => {
+        peticionesAPI.EnviarEmail (datos.email, datos.nombre, datos.contrasena);
     });
 
     socket.on("respuestaJuegoDeCuestionario", (alumno) => {
@@ -82,6 +109,27 @@ io.on("connection", (socket) => {
         dashSocket.emit ("notificarVotaciones", res);
 
     });
+
+    socket.on("nickNameJuegoRapido", (nick) => {
+        console.log("Recibo Nick: " + nick);
+        dashSocket.emit ("nickNameJuegoRapido", nick);
+
+    });
+
+
+    socket.on("respuestaEncuestaRapida", (respuesta) => {
+        console.log("Respuesta encuesta rapida de: " + respuesta.nick);
+        dashSocket.emit ("respuestaEncuestaRapida", respuesta);
+
+    });
+
+    socket.on("respuestaVotacionRapida", (respuesta) => {
+        console.log("Respuesta encuesta rapida de: " + respuesta.nick);
+        dashSocket.emit ("respuestaVotacionRapida", respuesta);
+
+    });
+
+
     socket.on("usuarioDesconectado", (conectado) => {
         console.log("Se desconecta:  " + conectado.Nombre + " " + conectado.PrimerApellido);
         conectados = conectados.filter ((con) => con.id !== conectado.id);

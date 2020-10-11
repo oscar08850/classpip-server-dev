@@ -10,13 +10,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const http_1 = __importDefault(require("http"));
+const enviarEmail_1 = require("./enviarEmail");
 const peticionesAPI_1 = require("./peticionesAPI");
 // tslint:disable-next-line:ordered-imports
 const socket_io_1 = __importDefault(require("socket.io"));
+// const configMensaje = require('./);
+const cors = require('cors');
+const bodyParser = require('body-parser');
+// const configMensaje = require('./configMensaje');
 const app = express_1.default();
+app.use(bodyParser.json());
+app.use(cors());
 const server = new http_1.default.Server(app);
 const io = socket_io_1.default(server);
 const peticionesAPI = new peticionesAPI_1.PeticionesAPIService();
+const enviarEmail = new enviarEmail_1.EnviarEmailService();
 const port = 8080;
 let dashSocket;
 let conectados = [];
@@ -37,6 +45,9 @@ io.on("connection", (socket) => {
     console.log("user connected");
     console.log("Conectados:  ");
     console.log(conectados);
+    socket.on("forceDisconnect", () => {
+        socket.disconnect();
+    });
     socket.on("dash", (message) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
@@ -46,6 +57,9 @@ io.on("connection", (socket) => {
         conectados.push({ id: conectado.id, soc: socket });
         console.log("Conectados:  ");
         console.log(conectados);
+    });
+    socket.on("recordarContraseña", (datos) => {
+        peticionesAPI.EnviarEmail(datos.email, datos.nombre, datos.contrasena);
     });
     socket.on("respuestaJuegoDeCuestionario", (alumno) => {
         console.log("Notifica respuesta a juego de cuestionario el alumno " + alumno.id);
@@ -62,6 +76,18 @@ io.on("connection", (socket) => {
     socket.on("notificarVotaciones", (res) => {
         console.log("Notifica votaciones ");
         dashSocket.emit("notificarVotaciones", res);
+    });
+    socket.on("nickNameJuegoRapido", (nick) => {
+        console.log("Recibo Nick: " + nick);
+        dashSocket.emit("nickNameJuegoRapido", nick);
+    });
+    socket.on("respuestaEncuestaRapida", (respuesta) => {
+        console.log("Respuesta encuesta rapida de: " + respuesta.nick);
+        dashSocket.emit("respuestaEncuestaRapida", respuesta);
+    });
+    socket.on("respuestaVotacionRapida", (respuesta) => {
+        console.log("Respuesta encuesta rapida de: " + respuesta.nick);
+        dashSocket.emit("respuestaVotacionRapida", respuesta);
     });
     socket.on("usuarioDesconectado", (conectado) => {
         console.log("Se desconecta:  " + conectado.Nombre + " " + conectado.PrimerApellido);
