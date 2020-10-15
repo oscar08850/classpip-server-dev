@@ -129,6 +129,12 @@ io.on("connection", (socket) => {
 
     });
 
+    socket.on("respuestaCuestionarioRapido", (respuesta) => {
+        console.log("Respuesta cuestionario rapido de: " + respuesta.nick);
+        dashSocket.emit ("respuestaCuestionarioRapido", respuesta);
+
+    });
+
 
     socket.on("usuarioDesconectado", (conectado) => {
         console.log("Se desconecta:  " + conectado.Nombre + " " + conectado.PrimerApellido);

@@ -89,6 +89,10 @@ io.on("connection", (socket) => {
         console.log("Respuesta encuesta rapida de: " + respuesta.nick);
         dashSocket.emit("respuestaVotacionRapida", respuesta);
     });
+    socket.on("respuestaCuestionarioRapido", (respuesta) => {
+        console.log("Respuesta cuestionario rapido de: " + respuesta.nick);
+        dashSocket.emit("respuestaCuestionarioRapido", respuesta);
+    });
     socket.on("usuarioDesconectado", (conectado) => {
         console.log("Se desconecta:  " + conectado.Nombre + " " + conectado.PrimerApellido);
         conectados = conectados.filter((con) => con.id !== conectado.id);
