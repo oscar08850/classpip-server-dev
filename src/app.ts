@@ -48,6 +48,8 @@ let dashSocket;
 
 let conectados: any [] = [];
 
+let listaNotificacionesJuegos: any [] = [];
+
 // try {
 //     axios.get().then ((respuesta) => {
 //       console.log (respuesta.data);
@@ -72,6 +74,10 @@ io.on("connection", (socket) => {
     console.log (conectados);
     socket.on("forceDisconnect", () => {
         socket.disconnect();
+    });
+
+    socket.on ("desconectarJuegoCogerTurno", (clave) => {
+        listaNotificacionesJuegos = listaNotificacionesJuegos.filter ((elem) => elem.clave !== clave);
     });
 
     socket.on("dash", (message) => {
@@ -116,6 +122,16 @@ io.on("connection", (socket) => {
 
     });
 
+    // Esto es cuando el movil va a recibir notificaciones
+    socket.on("nickName+claveJuegoRapido", (datos) => {
+        console.log("Recibo Nick: " + datos.n);
+        dashSocket.emit ("nickNameJuegoRapido", datos.n);
+        // guardo el socket y la clave del juego
+        listaNotificacionesJuegos.push ( {soc: socket, c: datos.c});
+    });
+
+
+
 
     socket.on("respuestaEncuestaRapida", (respuesta) => {
         console.log("Respuesta encuesta rapida de: " + respuesta.nick);
@@ -129,11 +145,21 @@ io.on("connection", (socket) => {
 
     });
 
+
     socket.on("respuestaCuestionarioRapido", (respuesta) => {
         console.log("Respuesta cuestionario rapido de: " + respuesta.nick);
         dashSocket.emit ("respuestaCuestionarioRapido", respuesta);
 
     });
+
+    socket.on("turnoElegido", (info) => {
+        console.log("Turno recibido");
+        console.log (info);
+
+        dashSocket.emit ("turnoElegido:" + info.clave, info);
+
+    });
+
 
 
     socket.on("usuarioDesconectado", (conectado) => {
@@ -149,6 +175,30 @@ io.on("connection", (socket) => {
     });
 
     // Notificaciones para los alumnos
+
+
+    // Notificación para alumnos de un juego rápido
+    socket.on("notificacionTurnoCogido", (info) => {
+        console.log("Recibo notificacion para juego rapido ", info.clave);
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = listaNotificacionesJuegos.filter ((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach ((conectado) => {
+            conectado.soc.emit ("turnoCogido", info.turno);
+        });
+    });
+
+    
+    // Notificación para alumnos de un juego rápido
+    socket.on("notificacionTurnoNuevo", (info) => {
+        console.log("Recibo notificacion para juego rapido ", info.clave);
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = listaNotificacionesJuegos.filter ((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach ((conectado) => {
+            conectado.soc.emit ("turnoNuevo", info.turno);
+        });
+    });
+
+
 
     // Notificación para un alumno
     socket.on("notificacionIndividual", (info) => {
