@@ -80,6 +80,10 @@ io.on("connection", (socket) => {
         listaNotificacionesJuegos = listaNotificacionesJuegos.filter ((elem) => elem.clave !== clave);
     });
 
+    socket.on("desconectarDash", (message) => {
+        console.log("Se ha desconectado el dashboard");
+        dashSocket.disconnect();
+    });
     socket.on("dash", (message) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
@@ -92,6 +96,11 @@ io.on("connection", (socket) => {
     });
     socket.on("recordarContraseña", (datos) => {
         peticionesAPI.EnviarEmail (datos.email, datos.nombre, datos.contrasena);
+    });
+
+    socket.on ("enviarInfoRegistroAlumno", (datos) => {
+        console.log ('recibo peticion enviar info alumno ');
+        peticionesAPI.EnviarEmailRegistroAlumno (datos.p, datos.a);
     });
 
     socket.on("respuestaJuegoDeCuestionario", (alumno) => {
