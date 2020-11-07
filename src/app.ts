@@ -58,12 +58,6 @@ let listaNotificacionesJuegos: any [] = [];
 //     console.log ("Error");
 // }
 
-const host = "http://147.83.118.92";
-const APIUrlProfesores = host + ":3000/api/Profesores";
-const APIUrlAlumnos = host + ":3000/api/Alumnos";
-const APIUrlGrupos = host + ":3000/api/Grupos";
-const APIUrlMatriculas = host + ":3000/api/Matriculas";
-const APIUrlEquipos = host + ":3000/api/Equipos";
 
 
 
@@ -80,6 +74,10 @@ io.on("connection", (socket) => {
         listaNotificacionesJuegos = listaNotificacionesJuegos.filter ((elem) => elem.clave !== clave);
     });
 
+    socket.on("desconectarDash", (message) => {
+        console.log("Se ha desconectado el dashboard");
+        dashSocket.disconnect();
+    });
     socket.on("dash", (message) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
@@ -92,6 +90,11 @@ io.on("connection", (socket) => {
     });
     socket.on("recordarContraseña", (datos) => {
         peticionesAPI.EnviarEmail (datos.email, datos.nombre, datos.contrasena);
+    });
+
+    socket.on ("enviarInfoRegistroAlumno", (datos) => {
+        console.log ("recibo peticion enviar info alumno ");
+        peticionesAPI.EnviarEmailRegistroAlumno (datos.p, datos.a);
     });
 
     socket.on("respuestaJuegoDeCuestionario", (alumno) => {
