@@ -12,18 +12,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = __importDefault(require("axios"));
 const nodemailer = __importStar(require("nodemailer"));
-const host = "http://147.83.118.92";
-const APIUrlProfesores = host + ":3000/api/Profesores";
-const APIUrlAlumnos = host + ":3000/api/Alumnos";
-const APIUrlGrupos = host + ":3000/api/Grupos";
-const APIUrlMatriculas = host + ":3000/api/Matriculas";
-const APIUrlEquipos = host + ":3000/api/Equipos";
+const URL = __importStar(require("./urls"));
 class PeticionesAPIService {
     DameAlumnosEquipo(equipoId) {
-        return axios_1.default.get(APIUrlEquipos + "/" + equipoId + "/alumnos");
+        return axios_1.default.get(URL.APIUrlEquipos + "/" + equipoId + "/alumnos");
     }
     DameAlumnosGrupo(grupoId) {
-        return axios_1.default.get(APIUrlGrupos + "/" + grupoId + "/alumnos");
+        return axios_1.default.get(URL.APIUrlGrupos + "/" + grupoId + "/alumnos");
     }
     EnviarEmail(email, nombre, contrasena) {
         const transporter = nodemailer.createTransport({
