@@ -26,9 +26,9 @@ const io = socket_io_1.default(server);
 const peticionesAPI = new peticionesAPI_1.PeticionesAPIService();
 const enviarEmail = new enviarEmail_1.EnviarEmailService();
 const port = 8080;
-let dashSocket;
-let conectados = [];
-let listaNotificacionesJuegos = [];
+let alumnosConectados = [];
+let registroNotificacionesJuegos = [];
+let socketsDashboards = [];
 // try {
 //     axios.get().then ((respuesta) => {
 //       console.log (respuesta.data);
@@ -36,92 +36,121 @@ let listaNotificacionesJuegos = [];
 // } catch {
 //     console.log ("Error");
 // }
-const host = "http://147.83.118.92";
-const APIUrlProfesores = host + ":3000/api/Profesores";
-const APIUrlAlumnos = host + ":3000/api/Alumnos";
-const APIUrlGrupos = host + ":3000/api/Grupos";
-const APIUrlMatriculas = host + ":3000/api/Matriculas";
-const APIUrlEquipos = host + ":3000/api/Equipos";
 io.on("connection", (socket) => {
-    console.log("user connected");
-    console.log("Conectados:  ");
-    console.log(conectados);
     socket.on("forceDisconnect", () => {
         socket.disconnect();
     });
-    socket.on("desconectarJuegoCogerTurno", (clave) => {
-        listaNotificacionesJuegos = listaNotificacionesJuegos.filter((elem) => elem.clave !== clave);
-    });
-    socket.on("desconectarDash", (message) => {
-        console.log("Se ha desconectado el dashboard");
-        dashSocket.disconnect();
-    });
-    socket.on("dash", (message) => {
+    // Conexion/desconexión Dashboard
+    socket.on("conectarDash", (profesorId) => {
         console.log("Se ha conectado el dashboard");
-        dashSocket = socket;
+        socketsDashboards.push({
+            s: socket,
+            // tslint:disable-next-line:object-literal-sort-keys
+            pId: profesorId,
+        });
     });
-    socket.on("usuarioConectado", (conectado) => {
-        console.log("Se conecta:  " + conectado.Nombre + " " + conectado.PrimerApellido);
-        conectados.push({ id: conectado.id, soc: socket });
-        console.log("Conectados:  ");
-        console.log(conectados);
+    socket.on("desconectarDash", (profesorId) => {
+        console.log("Se ha desconectado un dashboard");
+        const s = socketsDashboards.filter((elem) => elem.pId === profesorId)[0].s;
+        s.disconnect();
+        socketsDashboards = socketsDashboards.filter((elem) => elem.s !== s);
+    });
+    //Conexion/desconexión alumno
+    socket.on("alumnoConectado", (alumno) => {
+        console.log('se conecta un alumno');
+        console.log(alumno);
+        alumnosConectados.push({ id: alumno.id, soc: socket });
+    });
+    socket.on("alumnoDesconectado", (alumno) => {
+        alumnosConectados = alumnosConectados.filter((con) => con.id !== alumno.id);
+    });
+    // Juegos ràpidos
+    socket.on("nickNameJuegoRapido", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("nickNameJuegoRapido", datos.info);
+        }
+    });
+    // Cuando en el juego rapido los alumnos reciben notificaciones se llama a esta función para que se registre el alumno
+    socket.on("nickNameJuegoRapidoYRegistro", (datos) => {
+        // guardo el socket y la clave del juego
+        registroNotificacionesJuegos.push({ soc: socket, c: datos.c });
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("nickNameJuegoRapido", datos.info);
+        }
+    });
+    socket.on("respuestaEncuestaRapida", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("respuestaEncuestaRapida", datos.info);
+        }
+    });
+    socket.on("desconectarJuegoCogerTurno", (clave) => {
+        registroNotificacionesJuegos = registroNotificacionesJuegos.filter((elem) => elem.clave !== clave);
     });
     socket.on("recordarContraseña", (datos) => {
         peticionesAPI.EnviarEmail(datos.email, datos.nombre, datos.contrasena);
     });
     socket.on("enviarInfoRegistroAlumno", (datos) => {
-        console.log('recibo peticion enviar info alumno ');
+        console.log("recibo peticion enviar info alumno ");
         peticionesAPI.EnviarEmailRegistroAlumno(datos.p, datos.a);
     });
-    socket.on("respuestaJuegoDeCuestionario", (alumno) => {
-        console.log("Notifica respuesta a juego de cuestionario el alumno " + alumno.id);
-        dashSocket.emit("respuestaJuegoDeCuestionario", alumno);
+    socket.on("respuestaJuegoDeCuestionario", (datos) => {
+        console.log('recibo respuesta juengo cuestionario');
+        console.log(datos);
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        console.log('voy a emitir respuesta');
+        console.log(dash);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaJuegoDeCuestionario", datos.info));
+        }
     });
-    socket.on("modificacionAvatar", (res) => {
-        console.log("Notifica cambio en avatar ", res);
-        dashSocket.emit("modificacionAvatar", res);
+    socket.on("modificacionAvatar", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("modificacionAvatar", datos.info);
+        }
     });
-    socket.on("notificarVotacion", (res) => {
-        console.log("Notifica votacion ");
-        dashSocket.emit("notificarVotacion", res);
+    socket.on("notificarVotacion", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("notificarVotacion", datos.info);
+        }
     });
-    socket.on("notificarVotaciones", (res) => {
-        console.log("Notifica votaciones ");
-        dashSocket.emit("notificarVotaciones", res);
+    socket.on("notificarVotaciones", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("notificarVotaciones", datos.info);
+        }
     });
-    socket.on("nickNameJuegoRapido", (nick) => {
-        console.log("Recibo Nick: " + nick);
-        dashSocket.emit("nickNameJuegoRapido", nick);
+    socket.on("respuestaVotacionRapida", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("respuestaVotacionRapida", datos.info);
+        }
     });
-    // Esto es cuando el movil va a recibir notificaciones
-    socket.on("nickName+claveJuegoRapido", (datos) => {
-        console.log("Recibo Nick: " + datos.n);
-        dashSocket.emit("nickNameJuegoRapido", datos.n);
-        // guardo el socket y la clave del juego
-        listaNotificacionesJuegos.push({ soc: socket, c: datos.c });
+    socket.on("respuestaCuestionarioRapido", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("respuestaCuestionarioRapido", datos.info);
+        }
     });
-    socket.on("respuestaEncuestaRapida", (respuesta) => {
-        console.log("Respuesta encuesta rapida de: " + respuesta.nick);
-        dashSocket.emit("respuestaEncuestaRapida", respuesta);
-    });
-    socket.on("respuestaVotacionRapida", (respuesta) => {
-        console.log("Respuesta encuesta rapida de: " + respuesta.nick);
-        dashSocket.emit("respuestaVotacionRapida", respuesta);
-    });
-    socket.on("respuestaCuestionarioRapido", (respuesta) => {
-        console.log("Respuesta cuestionario rapido de: " + respuesta.nick);
-        dashSocket.emit("respuestaCuestionarioRapido", respuesta);
-    });
-    socket.on("turnoElegido", (info) => {
-        console.log("Turno recibido");
-        console.log(info);
-        dashSocket.emit("turnoElegido:" + info.clave, info);
-    });
-    socket.on("usuarioDesconectado", (conectado) => {
-        console.log("Se desconecta:  " + conectado.Nombre + " " + conectado.PrimerApellido);
-        conectados = conectados.filter((con) => con.id !== conectado.id);
-        console.log("Conectados:  ");
-        console.log(conectados);
+    socket.on("turnoElegido", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId)[0];
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.s.emit("turnoElegido", datos.info);
+        }
     });
     socket.on("'disconnect'", (res) => {
         console.log("Se desconecta el cliente ");
@@ -129,9 +158,12 @@ io.on("connection", (socket) => {
     // Notificaciones para los alumnos
     // Notificación para alumnos de un juego rápido
     socket.on("notificacionTurnoCogido", (info) => {
-        console.log("Recibo notificacion para juego rapido ", info.clave);
+        console.log("Recibo notificacion de turno cogido ", info.clave);
+        console.log(registroNotificacionesJuegos);
         // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
-        const conectadosJuegoRapido = listaNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        console.log('envio notificacion de turno cogido a');
+        console.log(conectadosJuegoRapido);
         conectadosJuegoRapido.forEach((conectado) => {
             conectado.soc.emit("turnoCogido", info.turno);
         });
@@ -140,7 +172,7 @@ io.on("connection", (socket) => {
     socket.on("notificacionTurnoNuevo", (info) => {
         console.log("Recibo notificacion para juego rapido ", info.clave);
         // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
-        const conectadosJuegoRapido = listaNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
         conectadosJuegoRapido.forEach((conectado) => {
             conectado.soc.emit("turnoNuevo", info.turno);
         });
@@ -148,7 +180,7 @@ io.on("connection", (socket) => {
     // Notificación para un alumno
     socket.on("notificacionIndividual", (info) => {
         console.log("Recibo notificacion para alumno ", info);
-        const conectado = conectados.filter((con) => con.id === info.alumnoId)[0];
+        const conectado = alumnosConectados.filter((con) => con.id === info.alumnoId)[0];
         if (conectado !== undefined) {
             console.log("envio notificación al alumno " + info.alumnoId);
             conectado.soc.emit("notificacion", info.mensaje);
@@ -163,7 +195,7 @@ io.on("connection", (socket) => {
             console.log("Alumnos del equipo");
             console.log(alumnos);
             alumnos.forEach((alumno) => {
-                const conectado = conectados.filter((con) => con.id === alumno.id)[0];
+                const conectado = alumnosConectados.filter((con) => con.id === alumno.id)[0];
                 if (conectado !== undefined) {
                     console.log("envio notificación al alumno " + alumno.id);
                     conectado.soc.emit("notificacion", info.mensaje);
@@ -183,7 +215,7 @@ io.on("connection", (socket) => {
             console.log("Alumnos del grupo");
             console.log(alumnos);
             alumnos.forEach((alumno) => {
-                const conectado = conectados.filter((con) => con.id === alumno.id)[0];
+                const conectado = alumnosConectados.filter((con) => con.id === alumno.id)[0];
                 if (conectado !== undefined) {
                     console.log("envio notificación al alumno " + alumno.id);
                     conectado.soc.emit("notificacion", info.mensaje);
