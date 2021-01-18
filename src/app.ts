@@ -299,6 +299,52 @@ io.on("connection", (socket) => {
             console.log (error);
         });
     });
+
+    //Para avanzar pregunta
+    socket.on('avanzarPregunta',(info) => {
+        console.log("Avanzar pregunta");
+        console.log("Recibo notificacion para el grupo ", info);
+        peticionesAPI.DameAlumnosGrupo (info.grupoId)
+        .then ((res) => {
+                const alumnos = res.data;
+                console.log ("Alumnos del grupo");
+                console.log (alumnos);
+                alumnos.forEach((alumno) => {
+                    const conectado = alumnosConectados.filter ((con) => con.id === alumno.id)[0];
+                    console.log("MIRAMOS LA CONEXIÓN");
+                    console.log(conectado);
+                    if (conectado !== undefined) {
+                        console.log ("envio notificación al alumno " + alumno.id);
+                        conectado.soc.emit ("avanzarPregunta"," info.mensaje");
+                    }
+                });
+        }).catch ( (error) => {
+            console.log ("error");
+            console.log (error);
+        });
+    });
+   
+    //Para enviar la respuesta del alumno en Modalidad Kahoot al Dashboard
+    socket.on('respuestaAlumnoKahoot',(datos) => {
+        console.log("Respuesta pasando por servidor", datos);
+        const listaSocket = socketsDashboards.filter ((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket)=>{
+            console.log("Envio Respuesta al profesor:", socket.pId);
+            console.log("Envio Respuesta al profesor:",datos);
+            socket.s.emit("respuestaAlumnoKahoot",datos);
+        });
+    });
+
+    //Para enviar la conexión del alumno al juego en Modalidad Kahoot al Dashboard
+    socket.on('conexionAlumnoKahoot',(datos) => {
+        console.log("Conexión de alumno al juego pasando por servidor");
+        console.log(datos);
+        const listaSocket = socketsDashboards.filter ((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket)=>{
+            console.log("Envio Respuesta al profesor:", socket.pId);
+            socket.s.emit("conexionAlumnoKahoot", datos.alumnoId);
+        });
+    });
 });
 
 server.listen(port, () => {
