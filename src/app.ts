@@ -65,7 +65,7 @@ let socketsDashboards: any[] = [];
 
 
 io.on("connection", (socket) => {
-    console.log ('conexion nueva');
+  
  
     socket.on("forceDisconnect", () => {
         console.log("Se ha desconectado alguien");
