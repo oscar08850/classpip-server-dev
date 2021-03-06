@@ -82,7 +82,7 @@ export class PeticionesAPIService {
                     "En cuanto puedas por favor cambia tu contraseña (también puedes cambiar tu nombre de usuario) <br> <br>" +
                     "Bienvenido a Classpip <br><br>" +
                     "Recuerda que puedes acceder a la app conectándote a: <br>" +
-                    "147.83.118.92:8100",
+                    "147.83.118.92:8100/home",
         };
         // tslint:disable-next-line:only-arrow-functions
         transporter.sendMail(mailOptions, function(err, info) {
