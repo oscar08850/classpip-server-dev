@@ -38,7 +38,6 @@ let socketsDashboards = [];
 //     console.log ("Error");
 // }
 io.on("connection", (socket) => {
-    console.log('conexion nueva');
     socket.on("forceDisconnect", () => {
         console.log("Se ha desconectado alguien");
         // Quitamos el socket de las listas de sockets de profes y de alumnos
