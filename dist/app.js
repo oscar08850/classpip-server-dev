@@ -26,6 +26,7 @@ const io = socket_io_1.default(server);
 const peticionesAPI = new peticionesAPI_1.PeticionesAPIService();
 const enviarEmail = new enviarEmail_1.EnviarEmailService();
 const port = 8080;
+//const port = 8200;
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
 let socketsDashboards = [];
@@ -37,6 +38,7 @@ let socketsDashboards = [];
 //     console.log ("Error");
 // }
 io.on("connection", (socket) => {
+    console.log('conexion nueva');
     socket.on("forceDisconnect", () => {
         console.log("Se ha desconectado alguien");
         // Quitamos el socket de las listas de sockets de profes y de alumnos
@@ -62,9 +64,12 @@ io.on("connection", (socket) => {
     });
     socket.on("desconectarDash", (profesorId) => {
         console.log("Se ha desconectado un dashboard");
-        const s = socketsDashboards.filter((elem) => elem.pId === profesorId)[0].s;
-        s.disconnect();
-        socketsDashboards = socketsDashboards.filter((elem) => elem.s !== s);
+        const profesor = socketsDashboards.filter((elem) => elem.pId === profesorId)[0];
+        if (profesor) {
+            const s = profesor.s;
+            s.disconnect();
+            socketsDashboards = socketsDashboards.filter((elem) => elem.s !== s);
+        }
     });
     //Conexion/desconexión alumno
     socket.on("alumnoConectado", (alumno) => {
@@ -73,7 +78,14 @@ io.on("connection", (socket) => {
         alumnosConectados.push({ id: alumno.id, soc: socket });
     });
     socket.on("alumnoDesconectado", (alumno) => {
-        alumnosConectados = alumnosConectados.filter((con) => con.id !== alumno.id);
+        console.log('se desconecta un alumno');
+        console.log(alumno);
+        const al = alumnosConectados.filter((con) => con.id === alumno.id)[0];
+        if (al) {
+            const s = al.soc;
+            s.disconnect();
+            alumnosConectados = alumnosConectados.filter((con) => con.id !== alumno.id);
+        }
     });
     // Juegos ràpidos
     socket.on("nickNameJuegoRapido", (datos) => {
@@ -108,7 +120,9 @@ io.on("connection", (socket) => {
     socket.on("desconectarJuegoCogerTurno", (clave) => {
         registroNotificacionesJuegos = registroNotificacionesJuegos.filter((elem) => elem.clave !== clave);
     });
-    socket.on("recordarContraseña", (datos) => {
+    socket.on("recordarPassword", (datos) => {
+        console.log('recibo petición de recordar contraseñá');
+        console.log(datos);
         peticionesAPI.EnviarEmail(datos.email, datos.nombre, datos.contrasena);
     });
     socket.on("enviarInfoRegistroAlumno", (datos) => {
@@ -292,6 +306,36 @@ io.on("connection", (socket) => {
         listaSocket.forEach((socket) => {
             console.log("Envio Respuesta al profesor:", socket.pId);
             socket.s.emit("conexionAlumnoKahoot", datos.alumnoId);
+        });
+    });
+    socket.on("confirmacionPreparadoParaKahoot", (datos) => {
+        const listaSocket = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket) => {
+            socket.s.emit("confirmacionPreparadoParaKahoot", datos.info);
+        });
+    });
+    // Notificación para alumnos de un juego rápido
+    socket.on("lanzarSiguientePregunta", (info) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach((conectado) => {
+            conectado.soc.emit("lanzarSiguientePregunta", info.opcionesDesordenadas);
+        });
+    });
+    //Para enviar la respuesta del alumno en Modalidad Kahoot Rapido al Dashboard
+    socket.on("respuestaAlumnoKahootRapido", (datos) => {
+        console.log('trasmito a dash respuesta a kahoot de ' + datos.nick);
+        const listaSocket = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket) => {
+            socket.s.emit("respuestaAlumnoKahootRapido", datos);
+        });
+    });
+    // Notificación para alumnos de un juego rápido
+    socket.on("resultadoFinalKahoot", (info) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach((conectado) => {
+            conectado.soc.emit("resultadoFinalKahoot", info.resultado);
         });
     });
 });

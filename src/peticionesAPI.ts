@@ -13,7 +13,28 @@ export class PeticionesAPIService {
         return axios.get(URL.APIUrlGrupos + "/" + grupoId + "/alumnos");
     }
 
+    // Si pasa tiempo sin enviar emails entonces en la cuenta de gmail se desactiva la opcion
+    // de permitir el acceso a aplicaciones no seguras.
+    // En ese caso hay que hacer lo siguiente:
+    //Loguearse en gmail con la cuenta de classpip
+    // Conectarse a esta url:
+    // https://support.google.com/mail/?p=BadCredentials
+    // ir a:
+    // permitir que apps menos seguras accedan a tu cuenta.
+    // Si está desactivada la opción "Acceso de apps menos seguras"
+    // 
+    // 
+
     public EnviarEmail(email: string, nombre: string, contrasena: string) {
+        console.log ('Estoy dentro de EnviarEmail');
+        console.log ('creo las opciones');
+        const mailOptions = {
+            from: "Classpip",
+            to: email, // Cambia esta parte por el destinatario
+            subject: "tu contraseña en Classpip",
+            html: nombre + ", <br> Tu contraseña en classpip es: " + contrasena,
+        };
+        console.log ('creo el transporter');
         const transporter = nodemailer.createTransport({
             auth: {
                 user: "classpip@gmail.com", // Cambialo por tu email
@@ -21,13 +42,9 @@ export class PeticionesAPIService {
             },
             service: "gmail",
         });
-        const mailOptions = {
-            from: "Classpip",
-            to: email, // Cambia esta parte por el destinatario
-            subject: "tu contraseña en Classpip",
-            html: nombre + ", <br> Tu contraseña en classpip es: " + contrasena,
-        };
+       
         // tslint:disable-next-line:only-arrow-functions
+        console.log ('voy a eviar email');
         transporter.sendMail(mailOptions, function(err, info) {
             if (err) {
                 console.log(err);
@@ -63,7 +80,9 @@ export class PeticionesAPIService {
                     "Email: " + alumno.Email + "<br><br>" +
                     // tslint:disable-next-line:max-line-length
                     "En cuanto puedas por favor cambia tu contraseña (también puedes cambiar tu nombre de usuario) <br> <br>" +
-                    "Bienvenido a Classpip",
+                    "Bienvenido a Classpip <br><br>" +
+                    "Recuerda que puedes acceder a la app conectándote a: <br>" +
+                    "147.83.118.92:8100",
         };
         // tslint:disable-next-line:only-arrow-functions
         transporter.sendMail(mailOptions, function(err, info) {
