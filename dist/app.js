@@ -26,7 +26,10 @@ const io = socket_io_1.default(server);
 const peticionesAPI = new peticionesAPI_1.PeticionesAPIService();
 const enviarEmail = new enviarEmail_1.EnviarEmailService();
 const port = 8080;
+
+
 let dashSocket;
+
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
 let socketsDashboards = [];
@@ -39,7 +42,22 @@ let conectados = [];
 //     console.log ("Error");
 // }
 io.on("connection", (socket) => {
-    socket.on("dash", (message) => {
+    socket.on("forceDisconnect", () => {
+        console.log("Se ha desconectado alguien");
+        // Quitamos el socket de las listas de sockets de profes y de alumnos
+        socketsDashboards = socketsDashboards.filter((elem) => elem.s !== socket);
+        alumnosConectados = alumnosConectados.filter((elem) => elem.soc !== socket);
+        socket.disconnect();
+    });
+    socket.on("disconnect", () => {
+        console.log("Se ha desconectado alguien");
+        // Quitamos el socket de las listas de sockets de profes y de alumnos
+        socketsDashboards = socketsDashboards.filter((elem) => elem.s !== socket);
+        alumnosConectados = alumnosConectados.filter((elem) => elem.soc !== socket);
+        socket.disconnect();
+    });
+    // Conexion/desconexión Dashboard
+    socket.on("conectarDash", (profesorId) => {
         console.log("Se ha conectado el dashboard");
         dashSocket = socket;
         conectados.push(socket);
@@ -50,12 +68,150 @@ io.on("connection", (socket) => {
             alumnosConectados = alumnosConectados.filter((elem) => elem.soc !== socket);
             socket.disconnect();
         });
-        socket.on("disconnect", () => {
-            console.log("Se ha desconectado alguien");
-            // Quitamos el socket de las listas de sockets de profes y de alumnos
-            socketsDashboards = socketsDashboards.filter((elem) => elem.s !== socket);
-            alumnosConectados = alumnosConectados.filter((elem) => elem.soc !== socket);
-            socket.disconnect();
+    });
+    socket.on("desconectarDash", (profesorId) => {
+        console.log("Se ha desconectado un dashboard");
+        const profesor = socketsDashboards.filter((elem) => elem.pId === profesorId)[0];
+        if (profesor) {
+            const s = profesor.s;
+            s.disconnect();
+            socketsDashboards = socketsDashboards.filter((elem) => elem.s !== s);
+        }
+    });
+    //Conexion/desconexión alumno
+    socket.on("alumnoConectado", (alumno) => {
+        console.log('se conecta un alumno');
+        console.log(alumno);
+        alumnosConectados.push({ id: alumno.id, soc: socket });
+    });
+    socket.on("alumnoDesconectado", (alumno) => {
+        console.log('se desconecta un alumno');
+        console.log(alumno);
+        const al = alumnosConectados.filter((con) => con.id === alumno.id)[0];
+        if (al) {
+            const s = al.soc;
+            s.disconnect();
+            alumnosConectados = alumnosConectados.filter((con) => con.id !== alumno.id);
+        }
+    });
+    // Juegos ràpidos
+    socket.on("nickNameJuegoRapido", (datos) => {
+        console.log('recibo nick');
+        console.log(datos);
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            console.log('envio notificacion');
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
+        }
+    });
+    // Cuando en el juego rapido los alumnos reciben notificaciones se llama a esta función para que se registre el alumno
+    socket.on("nickNameJuegoRapidoYRegistro", (datos) => {
+        console.log('recibo nick');
+        console.log(datos);
+        // guardo el socket y la clave del juego
+        registroNotificacionesJuegos.push({ soc: socket, c: datos.c });
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
+        }
+    });
+    socket.on("respuestaEncuestaRapida", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaEncuestaRapida", datos.info));
+        }
+    });
+    socket.on("desconectarJuegoCogerTurno", (clave) => {
+        registroNotificacionesJuegos = registroNotificacionesJuegos.filter((elem) => elem.clave !== clave);
+    });
+    socket.on("recordarPassword", (datos) => {
+        console.log('recibo petición de recordar contraseñá');
+        console.log(datos);
+        peticionesAPI.EnviarEmail(datos.email, datos.nombre, datos.contrasena);
+    });
+    socket.on("enviarInfoRegistroAlumno", (datos) => {
+        console.log("recibo peticion enviar info alumno ");
+        peticionesAPI.EnviarEmailRegistroAlumno(datos.p, datos.a);
+    });
+    socket.on("respuestaJuegoDeCuestionario", (datos) => {
+        console.log('recibo respuesta juengo cuestionario');
+        console.log(datos);
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        console.log('voy a emitir respuesta');
+        console.log(dash);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaJuegoDeCuestionario", datos.info));
+        }
+    });
+    socket.on("respuestaJuegoDeCuestionarioDeSatisfaccion", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaJuegoDeCuestionarioDeSatisfaccion", datos.info));
+        }
+    });
+    socket.on("modificacionAvatar", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("modificacionAvatar", datos.info));
+        }
+    });
+    socket.on("notificarVotacion", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("notificarVotacion", datos.info));
+        }
+    });
+    socket.on("notificarVotaciones", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("notificarVotaciones", datos.info));
+        }
+    });
+    socket.on("respuestaVotacionRapida", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaVotacionRapida", datos.info));
+        }
+    });
+    socket.on("respuestaCuestionarioRapido", (datos) => {
+        console.log('recibo respuesta cuestionario rapido');
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaCuestionarioRapido", datos.info));
+        }
+    });
+    socket.on("turnoElegido", (datos) => {
+        console.log('recibo turno elegido');
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            console.log('emito a ' + dash.length);
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("turnoElegido", datos.info));
+        }
+    });
+    socket.on("'disconnect'", (res) => {
+        console.log("Se desconecta el cliente ");
+    });
+    // Notificaciones para los alumnos
+    // Notificación para alumnos de un juego rápido
+    socket.on("notificacionTurnoCogido", (info) => {
+        console.log("Recibo notificacion de turno cogido ", info.clave);
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        console.log('envio notificacion de turno cogido a ' + conectadosJuegoRapido.length);
+        conectadosJuegoRapido.forEach((conectado) => {
+            console.log('envio notificacion de turno cogido a ');
+            conectado.soc.emit("turnoCogido", info.turno);
         });
         // Conexion/desconexión Dashboard
         socket.on("conectarDash", (profesorId) => {
@@ -312,6 +468,36 @@ io.on("connection", (socket) => {
                 console.log("Envio Respuesta al profesor:", socket.pId);
                 socket.s.emit("conexionAlumnoKahoot", datos.alumnoId);
             });
+        });
+    });
+    socket.on("confirmacionPreparadoParaKahoot", (datos) => {
+        const listaSocket = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket) => {
+            socket.s.emit("confirmacionPreparadoParaKahoot", datos.info);
+        });
+    });
+    // Notificación para alumnos de un juego rápido
+    socket.on("lanzarSiguientePregunta", (info) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach((conectado) => {
+            conectado.soc.emit("lanzarSiguientePregunta", info.opcionesDesordenadas);
+        });
+    });
+    //Para enviar la respuesta del alumno en Modalidad Kahoot Rapido al Dashboard
+    socket.on("respuestaAlumnoKahootRapido", (datos) => {
+        console.log('trasmito a dash respuesta a kahoot de ' + datos.nick);
+        const listaSocket = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket) => {
+            socket.s.emit("respuestaAlumnoKahootRapido", datos);
+        });
+    });
+    // Notificación para alumnos de un juego rápido
+    socket.on("resultadoFinalKahoot", (info) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach((conectado) => {
+            conectado.soc.emit("resultadoFinalKahoot", info.resultado);
         });
     });
 });

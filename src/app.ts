@@ -37,6 +37,7 @@ const peticionesAPI = new PeticionesAPIService();
 const enviarEmail = new EnviarEmailService();
 
 const port = 8080;
+//const port = 8200;
 
 let dashSocket;
 
@@ -60,77 +61,58 @@ let conectados: any[] = [];
 
 io.on("connection", (socket) => {
 
+    socket.on("forceDisconnect", () => {
+        console.log("Se ha desconectado alguien");
+        // Quitamos el socket de las listas de sockets de profes y de alumnos
+        socketsDashboards = socketsDashboards.filter  ((elem) => elem.s !== socket);
+        alumnosConectados = alumnosConectados.filter ((elem) => elem.soc !== socket);
+        socket.disconnect();
+    });
+    socket.on("disconnect", () => {
+        console.log("Se ha desconectado alguien");
+        // Quitamos el socket de las listas de sockets de profes y de alumnos
+        socketsDashboards = socketsDashboards.filter  ((elem) => elem.s !== socket);
+        alumnosConectados = alumnosConectados.filter ((elem) => elem.soc !== socket);
+        socket.disconnect();
+    });
 
-    socket.on("dash", (message) => {
+    // Conexion/desconexión Dashboard
+    socket.on("conectarDash", (profesorId) => {
         console.log("Se ha conectado el dashboard");
-        dashSocket = socket;
-        conectados.push(socket);
-
-        socket.on("forceDisconnect", () => {
-            console.log("Se ha desconectado alguien");
-            // Quitamos el socket de las listas de sockets de profes y de alumnos
-            socketsDashboards = socketsDashboards.filter((elem) => elem.s !== socket);
-            alumnosConectados = alumnosConectados.filter((elem) => elem.soc !== socket);
-            socket.disconnect();
+        socketsDashboards.push ({
+            s: socket,
+            // tslint:disable-next-line:object-literal-sort-keys
+            pId: profesorId,
         });
-        socket.on("disconnect", () => {
-            console.log("Se ha desconectado alguien");
-            // Quitamos el socket de las listas de sockets de profes y de alumnos
-            socketsDashboards = socketsDashboards.filter((elem) => elem.s !== socket);
-            alumnosConectados = alumnosConectados.filter((elem) => elem.soc !== socket);
-            socket.disconnect();
-        });
-
-        // Conexion/desconexión Dashboard
-        socket.on("conectarDash", (profesorId) => {
-            console.log("Se ha conectado el dashboard");
-            socketsDashboards.push({
-                s: socket,
-                // tslint:disable-next-line:object-literal-sort-keys
-                pId: profesorId,
-            });
-        });
-        socket.on("desconectarDash", (profesorId) => {
-            console.log("Se ha desconectado un dashboard");
-            const s = socketsDashboards.filter((elem) => elem.pId === profesorId)[0].s;
+    });
+    socket.on("desconectarDash", (profesorId) => {
+        console.log("Se ha desconectado un dashboard");
+        const profesor = socketsDashboards.filter ((elem) => elem.pId === profesorId)[0];
+        if (profesor) {
+            const s = profesor.s;
             s.disconnect();
-            socketsDashboards = socketsDashboards.filter((elem) => elem.s !== s);
-        });
+            socketsDashboards = socketsDashboards.filter ((elem) => elem.s !== s);
+        }
+    });
 
-        //////////
+    //Conexion/desconexión alumno
+    
+    socket.on("alumnoConectado", (alumno) => {
+        console.log ('se conecta un alumno');
+        console.log (alumno);
+        alumnosConectados.push ({id: alumno.id, soc: socket});
+    });
 
-        socket.on("notificacionvotar", (notificacionvotar) => {
-            console.log("Notifica cambio en la puntuacion de un concurso ", notificacionvotar);
-
-            try {
-                var notificacionvotardash = 'dash tienes una nueva puntuación';
-                dashSocket.emit("notificacionvotardash", notificacionvotardash);
-
-                console.log("despues de el emit");
-
-            }
-            catch (error) {
-                console.log("error");
-                console.log(error);
-            }
-
-
-
-        });
-
-
-        //Conexion/desconexión alumno
-
-        socket.on("alumnoConectado", (alumno) => {
-            console.log('se conecta un alumno');
-            console.log(alumno);
-            alumnosConectados.push({ id: alumno.id, soc: socket });
-        });
-
-        socket.on("alumnoDesconectado", (alumno) => {
-            alumnosConectados = alumnosConectados.filter((con) => con.id !== alumno.id);
-        });
-
+    socket.on("alumnoDesconectado", (alumno) => {
+        console.log ('se desconecta un alumno');
+        console.log (alumno);
+        const al = alumnosConectados.filter ((con) => con.id === alumno.id)[0];
+        if (al) {
+            const s = al.soc;
+            s.disconnect();
+            alumnosConectados = alumnosConectados.filter ((con) => con.id !== alumno.id);
+        }
+    });
 
 
         // Juegos ràpidos
@@ -396,6 +378,40 @@ io.on("connection", (socket) => {
             });
         });
     });
+
+    socket.on("confirmacionPreparadoParaKahoot",(datos) => {
+        const listaSocket = socketsDashboards.filter ((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket)=>{
+            socket.s.emit("confirmacionPreparadoParaKahoot", datos.info);
+        });
+    });
+     // Notificación para alumnos de un juego rápido
+    socket.on("lanzarSiguientePregunta", (info) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter ((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach ((conectado) => {
+            conectado.soc.emit ("lanzarSiguientePregunta", info.opcionesDesordenadas);
+        });
+    });
+
+    //Para enviar la respuesta del alumno en Modalidad Kahoot Rapido al Dashboard
+    socket.on("respuestaAlumnoKahootRapido",(datos) => {
+        console.log ('trasmito a dash respuesta a kahoot de ' + datos.nick);
+        const listaSocket = socketsDashboards.filter ((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket)=>{
+            socket.s.emit("respuestaAlumnoKahootRapido", datos);
+        });
+    });
+
+      // Notificación para alumnos de un juego rápido
+    socket.on("resultadoFinalKahoot", (info) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
+        const conectadosJuegoRapido = registroNotificacionesJuegos.filter ((elem) => elem.c === info.clave);
+        conectadosJuegoRapido.forEach ((conectado) => {
+            conectado.soc.emit ("resultadoFinalKahoot", info.resultado);
+        });
+    });
+
 });
 
 
