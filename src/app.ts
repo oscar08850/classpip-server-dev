@@ -43,7 +43,7 @@ const io = socketIO(server);
 const peticionesAPI = new PeticionesAPIService();
 const enviarEmail = new EnviarEmailService();
 
-const port = 8080;
+const port = 8200;
 //const port = 8200;
 
 
@@ -52,13 +52,6 @@ let alumnosConectados: any [] = [];
 let registroNotificacionesJuegos: any [] = [];
 let socketsDashboards: any[] = [];
 
-// try {
-//     axios.get().then ((respuesta) => {
-//       console.log (respuesta.data);
-//     });
-// } catch {
-//     console.log ("Error");
-// }
 
 
 
