@@ -43,8 +43,8 @@ class PeticionesAPIService {
         console.log('creo el transporter');
         const transporter = nodemailer.createTransport({
             auth: {
-                user: "classpip@gmail.com",
-                pass: "Classpip@2016" // Cambialo por tu password
+                user: "classpip2021@gmail.com",
+                pass: "classpipUPC@2021" // Cambialo por tu password
             },
             service: "gmail",
         });
@@ -63,8 +63,8 @@ class PeticionesAPIService {
         console.log('voy a enviar emial a ' + alumno.Email);
         const transporter = nodemailer.createTransport({
             auth: {
-                user: "classpip@gmail.com",
-                pass: "Classpip@2016" // Cambialo por tu password
+                user: "classpip2021@gmail.com",
+                pass: "classpipUPC@2021" // Cambialo por tu password
             },
             service: "gmail",
         });
@@ -85,7 +85,7 @@ class PeticionesAPIService {
                 "En cuanto puedas por favor cambia tu contraseña (también puedes cambiar tu nombre de usuario) <br> <br>" +
                 "Bienvenido a Classpip <br><br>" +
                 "Recuerda que puedes acceder a la app conectándote a: <br>" +
-                "147.83.118.92:8100/home",
+                "classpip.upc.edu:8100",
         };
         // tslint:disable-next-line:only-arrow-functions
         transporter.sendMail(mailOptions, function (err, info) {

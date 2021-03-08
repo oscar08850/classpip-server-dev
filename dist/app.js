@@ -24,20 +24,13 @@ const server = new http_1.default.Server(app);
 const io = socket_io_1.default(server);
 const peticionesAPI = new peticionesAPI_1.PeticionesAPIService();
 const enviarEmail = new enviarEmail_1.EnviarEmailService();
-const port = 8080;
-// const port = 8200;
-let dashSocket;
+
+const port = 8200;
+//const port = 8200;
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
 let socketsDashboards = [];
-const conectados = [];
-// try {
-//     axios.get().then ((respuesta) => {
-//       console.log (respuesta.data);
-//     });
-// } catch {
-//     console.log ("Error");
-// }
+
 io.on("connection", (socket) => {
     socket.on("forceDisconnect", () => {
         console.log("Se ha desconectado alguien");

@@ -34,8 +34,9 @@ const io = socketIO(server);
 const peticionesAPI = new PeticionesAPIService();
 const enviarEmail = new EnviarEmailService();
 
-const port = 8080;
-// const port = 8200;
+const port = 8200;
+//const port = 8200;
+
 
 let dashSocket;
 
@@ -45,13 +46,6 @@ let registroNotificacionesJuegos: any[] = [];
 let socketsDashboards: any[] = [];
 const conectados: any[] = [];
 
-// try {
-//     axios.get().then ((respuesta) => {
-//       console.log (respuesta.data);
-//     });
-// } catch {
-//     console.log ("Error");
-// }
 
 io.on("connection", (socket) => {
 
