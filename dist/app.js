@@ -24,13 +24,13 @@ const server = new http_1.default.Server(app);
 const io = socket_io_1.default(server);
 const peticionesAPI = new peticionesAPI_1.PeticionesAPIService();
 const enviarEmail = new enviarEmail_1.EnviarEmailService();
-
 const port = 8200;
 //const port = 8200;
+let dashSocket;
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
 let socketsDashboards = [];
-
+const conectados = [];
 io.on("connection", (socket) => {
     socket.on("forceDisconnect", () => {
         console.log("Se ha desconectado alguien");
@@ -113,7 +113,7 @@ io.on("connection", (socket) => {
     socket.on("desconectarJuegoCogerTurno", (clave) => {
         registroNotificacionesJuegos = registroNotificacionesJuegos.filter((elem) => elem.clave !== clave);
     });
-    socket.on("recordarContraseña", (datos) => {
+    socket.on("recordarPassword", (datos) => {
         peticionesAPI.EnviarEmail(datos.email, datos.nombre, datos.contrasena);
     });
     socket.on("enviarInfoRegistroAlumno", (datos) => {
