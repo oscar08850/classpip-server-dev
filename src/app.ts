@@ -141,7 +141,7 @@ io.on("connection", (socket) => {
             registroNotificacionesJuegos = registroNotificacionesJuegos.filter((elem) => elem.clave !== clave);
         });
 
-    socket.on("recordarContraseña", (datos) => {
+    socket.on("recordarPassword", (datos) => {
             peticionesAPI.EnviarEmail(datos.email, datos.nombre, datos.contrasena);
         });
 
