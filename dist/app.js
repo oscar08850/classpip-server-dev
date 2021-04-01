@@ -300,17 +300,36 @@ io.on("connection", (socket) => {
         });
     });
     socket.on("confirmacionPreparadoParaKahoot", (datos) => {
+        console.log("Confirma preparado para kahoot", datos);
         const listaSocket = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
         listaSocket.forEach((socket) => {
             socket.s.emit("confirmacionPreparadoParaKahoot", datos.info);
         });
     });
-    // Notificación para alumnos de un juego rápido
+    // Notificación para alumnos de un juego kahoot rápido
     socket.on("lanzarSiguientePregunta", (info) => {
         // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
         const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
         conectadosJuegoRapido.forEach((conectado) => {
             conectado.soc.emit("lanzarSiguientePregunta", info.opcionesDesordenadas);
+        });
+    });
+    // Notificación para alumnos de un juego Kahoot de grupo
+    socket.on("lanzarSiguientePreguntaGrupo", (info) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese grupo
+        peticionesAPI.DameAlumnosGrupo(info.grupoId)
+            .then((res) => {
+            const alumnos = res.data;
+            alumnos.forEach((alumno) => {
+                const conectado = alumnosConectados.filter((con) => con.id === alumno.id)[0];
+                if (conectado !== undefined) {
+                    console.log("envio notificación al alumno " + alumno.id);
+                    conectado.soc.emit("lanzarSiguientePregunta", info.opcionesDesordenadas);
+                }
+            });
+        }).catch((error) => {
+            console.log("error");
+            console.log(error);
         });
     });
     // Para enviar la respuesta del alumno en Modalidad Kahoot Rapido al Dashboard
@@ -321,12 +340,36 @@ io.on("connection", (socket) => {
             socket.s.emit("respuestaAlumnoKahootRapido", datos);
         });
     });
+    // Para enviar la respuesta del alumno en Modalidad grupo Rapido al Dashboard
+    socket.on("respuestaAlumnoKahootGrupo", (datos) => {
+        const listaSocket = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        listaSocket.forEach((socket) => {
+            socket.s.emit("respuestaAlumnoKahootGrupo", datos);
+        });
+    });
     // Notificación para alumnos de un juego rápido
     socket.on("resultadoFinalKahoot", (info) => {
         // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
         const conectadosJuegoRapido = registroNotificacionesJuegos.filter((elem) => elem.c === info.clave);
         conectadosJuegoRapido.forEach((conectado) => {
             conectado.soc.emit("resultadoFinalKahoot", info.resultado);
+        });
+    });
+    // Notificación para alumnos de un juego kahoot de grupo
+    socket.on("resultadoFinalKahootGrupo", (info) => {
+        peticionesAPI.DameAlumnosGrupo(info.grupoId)
+            .then((res) => {
+            const alumnos = res.data;
+            alumnos.forEach((alumno) => {
+                const conectado = alumnosConectados.filter((con) => con.id === alumno.id)[0];
+                if (conectado !== undefined) {
+                    console.log("envio notificación al alumno " + alumno.id);
+                    conectado.soc.emit("resultadoFinalKahoot", info.resultado);
+                }
+            });
+        }).catch((error) => {
+            console.log("error");
+            console.log(error);
         });
     });
 });
