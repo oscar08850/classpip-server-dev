@@ -55,14 +55,18 @@ io.on("connection", (socket) => {
             pId: profesorId,
         });
     });
+    // socket.on("desconectarDash", (profesorId) => {
+    //     console.log("Se ha desconectado un dashboard");
+    //     const profesor = socketsDashboards.filter ((elem) => elem.s === socket)[0];
+    //     if (profesor) {
+    //         const s = profesor.s;
+    //         s.disconnect();
+    //         socketsDashboards = socketsDashboards.filter ((elem) => elem.s !== s);
+    //     }
+    // });
     socket.on("desconectarDash", (profesorId) => {
-        console.log("Se ha desconectado un dashboard");
-        const profesor = socketsDashboards.filter((elem) => elem.pId === profesorId)[0];
-        if (profesor) {
-            const s = profesor.s;
-            s.disconnect();
-            socketsDashboards = socketsDashboards.filter((elem) => elem.s !== s);
-        }
+        socketsDashboards = socketsDashboards.filter((elem) => elem.s !== socket);
+        socket.disconnect();
     });
     // Conexion/desconexión alumno
     socket.on("alumnoConectado", (alumno) => {
@@ -70,15 +74,19 @@ io.on("connection", (socket) => {
         console.log(alumno);
         alumnosConectados.push({ id: alumno.id, soc: socket });
     });
+    // socket.on("alumnoDesconectado", (alumno) => {
+    //     console.log ("se desconecta un alumno");
+    //     console.log (alumno);
+    //     const al = alumnosConectados.filter ((con) => con.soc === socket)[0];
+    //     if (al) {
+    //         const s = al.soc;
+    //         s.disconnect();
+    //         alumnosConectados = alumnosConectados.filter ((con) => con.soc !== s);
+    //     }
+    // });
     socket.on("alumnoDesconectado", (alumno) => {
-        console.log("se desconecta un alumno");
-        console.log(alumno);
-        const al = alumnosConectados.filter((con) => con.id === alumno.id)[0];
-        if (al) {
-            const s = al.soc;
-            s.disconnect();
-            alumnosConectados = alumnosConectados.filter((con) => con.id !== alumno.id);
-        }
+        alumnosConectados = alumnosConectados.filter((con) => con.soc !== socket);
+        socket.disconnect();
     });
     // Juegos ràpidos
     socket.on("nickNameJuegoRapido", (datos) => {
