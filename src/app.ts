@@ -35,8 +35,7 @@ const peticionesAPI = new PeticionesAPIService();
 const enviarEmail = new EnviarEmailService();
 
 const port = 8200;
-//const port = 8200;
-
+// const port = 8200;
 
 let dashSocket;
 
@@ -45,7 +44,6 @@ let alumnosConectados: any[] = [];
 let registroNotificacionesJuegos: any[] = [];
 let socketsDashboards: any[] = [];
 const conectados: any[] = [];
-
 
 io.on("connection", (socket) => {
 
@@ -392,7 +390,6 @@ io.on("connection", (socket) => {
                 console.log(error);
             });
     });
-    
 
     // Para enviar la respuesta del alumno en Modalidad Kahoot Rapido al Dashboard
     socket.on("respuestaAlumnoKahootRapido", (datos) => {
@@ -439,9 +436,15 @@ io.on("connection", (socket) => {
             console.log(error);
         });
 
-
     });
 
+    socket.on("respuestaEvaluacion", (data: {alumnoId, profesorId, juegoId, evaluadoId, respuesta}) => {
+        console.log("respuestaEvaluacion", data);
+        const socketProfesor = socketsDashboards.find((item) => item.pId === data.profesorId);
+        if (socketProfesor) {
+            socketProfesor.s.emit("respuestaEvaluacion", data);
+        }
+    });
 
 });
 
