@@ -27,6 +27,5 @@
     "nodemon": "^2.0.1",
     "save": "^2.4.0",
     "save-dev": "0.0.1-security",
-    "body-parser": "^1.19.0"
   }
 }

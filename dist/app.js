@@ -25,7 +25,7 @@ const io = socket_io_1.default(server);
 const peticionesAPI = new peticionesAPI_1.PeticionesAPIService();
 const enviarEmail = new enviarEmail_1.EnviarEmailService();
 const port = 8200;
-//const port = 8200;
+// const port = 8200;
 let dashSocket;
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
@@ -379,6 +379,13 @@ io.on("connection", (socket) => {
             console.log("error");
             console.log(error);
         });
+    });
+    socket.on("respuestaEvaluacion", (data) => {
+        console.log("respuestaEvaluacion", data);
+        const socketProfesor = socketsDashboards.find((item) => item.pId === data.profesorId);
+        if (socketProfesor) {
+            socketProfesor.s.emit("respuestaEvaluacion", data);
+        }
     });
 });
 server.listen(port, () => {
