@@ -366,7 +366,9 @@ io.on("connection", (socket) => {
     socket.on("lanzarSiguientePregunta", (info) => {
         // Saco los elementos de la lista correspondientes a los jugadores conectados a ese juego rápido
         const conectadosJuegoRapido = registroNotificacionesJuegos.filter ((elem) => elem.c === info.clave);
+        console.log ('Notifico lanzar a ', conectadosJuegoRapido.length);
         conectadosJuegoRapido.forEach ((conectado) => {
+            console.log ('notifico');
             conectado.soc.emit ("lanzarSiguientePregunta", info.opcionesDesordenadas);
         });
     });
