@@ -139,6 +139,17 @@ io.on("connection", (socket) => {
             dash.forEach((elem) => elem.s.emit("respuestaJuegoDeCuestionario", datos.info));
         }
     });
+    socket.on("respuestaEquipoJuegoDeCuestionario", (datos) => {
+        console.log("recibo respuesta de equipo juego cuestionario");
+        console.log(datos);
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        console.log("voy a emitir respuesta");
+        console.log(dash);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaEquipoJuegoDeCuestionario", datos.info));
+        }
+    });
     socket.on("respuestaJuegoDeCuestionarioDeSatisfaccion", (datos) => {
         const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
         if (dash) {
