@@ -29,6 +29,8 @@ const port = 8080;
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
 let socketsDashboards = [];
+//Lista de Notificaciones Pendientes (guardadas en memoria del Servidor)
+const notificacionesPendientes = []; //{ alumnoID, mensaje }
 // try {
 //     axios.get().then ((respuesta) => {
 //       console.log (respuesta.data);
@@ -70,7 +72,18 @@ io.on("connection", (socket) => {
     socket.on("alumnoConectado", (alumno) => {
         console.log('se conecta un alumno');
         console.log(alumno);
-        alumnosConectados.push({ id: alumno.id, soc: socket });
+        if (!alumnosConectados.includes({ id: alumno.id, soc: socket })) { //Para evitar conexiones repetidas (Reconexión por caída de red en dispositivos móviles)
+            alumnosConectados.push({ id: alumno.id, soc: socket });
+            //Comprobar si tiene notificaciones pendientes
+            for (let i = 0; i < notificacionesPendientes.length; i++) {
+                if (notificacionesPendientes[i].alumnoID === alumno.id) {
+                    console.log("envio notificación al alumno " + notificacionesPendientes[i].alumnoID);
+                    socket.emit("notificacion", notificacionesPendientes[i].mensaje);
+                    //Eliminar la notificacion para que no le salga al Alumno cada vez que se conecta
+                    notificacionesPendientes.splice(i, 1);
+                }
+            }
+        }
     });
     socket.on("alumnoDesconectado", (alumno) => {
         alumnosConectados = alumnosConectados.filter((con) => con.id !== alumno.id);
@@ -210,6 +223,11 @@ io.on("connection", (socket) => {
             console.log("envio notificación al alumno " + info.alumnoId);
             conectado.soc.emit("notificacion", info.mensaje);
         }
+        else {
+            //Guardar la notificación pendiente, para mostrarla cuando se vuelva a conectar
+            notificacionesPendientes.push({ alumnoID: info.alumnoId, mensaje: info.mensaje });
+            //console.log(info.mensaje, "\nNo llega al Alumno esta notificación porque está desconectado");
+        }
     });
     // Notificaciones para los alumnos de un equipo
     socket.on("notificacionEquipo", (info) => {
@@ -224,6 +242,11 @@ io.on("connection", (socket) => {
                 if (conectado !== undefined) {
                     console.log("envio notificación al alumno " + alumno.id);
                     conectado.soc.emit("notificacion", info.mensaje);
+                }
+                else {
+                    //Guardar la notificación pendiente, para mostrarla cuando se vuelva a conectar
+                    notificacionesPendientes.push({ alumnoID: alumno.id, mensaje: info.mensaje });
+                    //console.log(info.mensaje, "\nNo llega al Alumno esta notificación porque está desconectado");
                 }
             });
         }).catch((error) => {
@@ -244,6 +267,11 @@ io.on("connection", (socket) => {
                 if (conectado !== undefined) {
                     console.log("envio notificación al alumno " + alumno.id);
                     conectado.soc.emit("notificacion", info.mensaje);
+                }
+                else {
+                    //Guardar la notificación pendiente, para mostrarla cuando se vuelva a conectar
+                    notificacionesPendientes.push({ alumnoID: alumno.id, mensaje: info.mensaje });
+                    //console.log(info.mensaje, "\nNo llega al Alumno esta notificación porque está desconectado");
                 }
             });
         }).catch((error) => {
