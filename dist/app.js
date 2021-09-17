@@ -30,7 +30,6 @@ let dashSocket;
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
 let socketsDashboards = [];
-
 //Lista de Notificaciones Pendientes (guardadas en memoria del Servidor)
 const notificacionesPendientes = []; //{ alumnoID, mensaje }
 // try {
@@ -40,9 +39,7 @@ const notificacionesPendientes = []; //{ alumnoID, mensaje }
 // } catch {
 //     console.log ("Error");
 // }
-
 const conectados = [];
-
 io.on("connection", (socket) => {
     socket.on("forceDisconnect", () => {
         console.log("Se ha desconectado alguien");
@@ -283,9 +280,6 @@ io.on("connection", (socket) => {
                     //console.log(info.mensaje, "\nNo llega al Alumno esta notificación porque está desconectado");
                 }
             });
-        }).catch((error) => {
-            console.log("error");
-            console.log(error);
         });
     });
     // Notificaciones para los alumnos de un grupo
