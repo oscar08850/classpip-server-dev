@@ -20,21 +20,36 @@ class PeticionesAPIService {
     DameAlumnosGrupo(grupoId) {
         return axios_1.default.get(URL.APIUrlGrupos + "/" + grupoId + "/alumnos");
     }
+    // Si pasa tiempo sin enviar emails entonces en la cuenta de gmail se desactiva la opcion
+    // de permitir el acceso a aplicaciones no seguras.
+    // En ese caso hay que hacer lo siguiente:
+    //Loguearse en gmail con la cuenta de classpip
+    // Conectarse a esta url:
+    // https://support.google.com/mail/?p=BadCredentials
+    // ir a:
+    // permitir que apps menos seguras accedan a tu cuenta.
+    // Si está desactivada la opción "Acceso de apps menos seguras"
+    // 
+    // 
     EnviarEmail(email, nombre, contrasena) {
-        const transporter = nodemailer.createTransport({
-            auth: {
-                user: "classpip@gmail.com",
-                pass: "Classpip@2016" // Cambialo por tu password
-            },
-            service: "gmail",
-        });
+        console.log('Estoy dentro de EnviarEmail');
+        console.log('creo las opciones');
         const mailOptions = {
             from: "Classpip",
             to: email,
             subject: "tu contraseña en Classpip",
             html: nombre + ", <br> Tu contraseña en classpip es: " + contrasena,
         };
+        console.log('creo el transporter');
+        const transporter = nodemailer.createTransport({
+            auth: {
+                user: "classpip2021@gmail.com",
+                pass: "classpipUPC@2021" // Cambialo por tu password
+            },
+            service: "gmail",
+        });
         // tslint:disable-next-line:only-arrow-functions
+        console.log('voy a eviar email');
         transporter.sendMail(mailOptions, function (err, info) {
             if (err) {
                 console.log(err);
@@ -48,8 +63,8 @@ class PeticionesAPIService {
         console.log('voy a enviar emial a ' + alumno.Email);
         const transporter = nodemailer.createTransport({
             auth: {
-                user: "classpip@gmail.com",
-                pass: "Classpip@2016" // Cambialo por tu password
+                user: "classpip2021@gmail.com",
+                pass: "classpipUPC@2021" // Cambialo por tu password
             },
             service: "gmail",
         });
@@ -68,7 +83,9 @@ class PeticionesAPIService {
                 "Email: " + alumno.Email + "<br><br>" +
                 // tslint:disable-next-line:max-line-length
                 "En cuanto puedas por favor cambia tu contraseña (también puedes cambiar tu nombre de usuario) <br> <br>" +
-                "Bienvenido a Classpip",
+                "Bienvenido a Classpip <br><br>" +
+                "Recuerda que puedes acceder a la app conectándote a: <br>" +
+                "classpip.upc.edu:8100",
         };
         // tslint:disable-next-line:only-arrow-functions
         transporter.sendMail(mailOptions, function (err, info) {

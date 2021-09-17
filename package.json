@@ -5,6 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "start": "tsc && node dist/app.js",
+    "trans": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -17,15 +18,14 @@
     "typescript": "^3.3.3"
   },
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "cors": "^2.8.5",
     "express": "^4.16.4",
-    "nodemailer": "^6.4.11",
+    "nodemailer": "^6.4.16",
     "rxjs": "^6.6.2",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.4.0",
     "nodemon": "^2.0.1",
     "save": "^2.4.0",
-    "save-dev": "0.0.1-security",
-    "body-parser": "^1.19.0"
+    "save-dev": "0.0.1-security"
   }
 }
