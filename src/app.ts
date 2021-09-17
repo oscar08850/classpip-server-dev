@@ -151,7 +151,7 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
             }
-        });
+    });
 
         // Cuando en el juego rapido los alumnos reciben notificaciones se llama a esta función para que se registre el alumno
     socket.on("nickNameJuegoRapidoYRegistro", (datos) => {
@@ -164,7 +164,7 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
             }
-        });
+    });
 
     socket.on("respuestaEncuestaRapida", (datos) => {
 
@@ -173,20 +173,20 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("respuestaEncuestaRapida", datos.info));
             }
-        });
+    });
 
     socket.on("desconectarJuegoCogerTurno", (clave) => {
             registroNotificacionesJuegos = registroNotificacionesJuegos.filter((elem) => elem.clave !== clave);
-        });
+    });
 
     socket.on("recordarPassword", (datos) => {
             peticionesAPI.EnviarEmail(datos.email, datos.nombre, datos.contrasena);
-        });
+    });
 
     socket.on("enviarInfoRegistroAlumno", (datos) => {
             console.log("recibo peticion enviar info alumno ");
             peticionesAPI.EnviarEmailRegistroAlumno(datos.p, datos.a);
-        });
+    });
 
     socket.on("respuestaJuegoDeCuestionario", (datos) => {
             console.log("recibo respuesta juengo cuestionario");
@@ -198,7 +198,7 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("respuestaJuegoDeCuestionario", datos.info));
             }
-        });
+    });
         
     socket.on("respuestaEquipoJuegoDeCuestionario", (datos) => {
         console.log("recibo respuesta de equipo juego cuestionario");
@@ -219,7 +219,7 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("respuestaJuegoDeCuestionarioDeSatisfaccion", datos.info));
             }
-        });
+    });
 
     socket.on("modificacionAvatar", (datos) => {
             const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
@@ -227,7 +227,7 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("modificacionAvatar", datos.info));
             }
-        });
+    });
 
     socket.on("notificarVotacion", (datos) => {
             const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
@@ -235,14 +235,14 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("notificarVotacion", datos.info));
             }
-        });
+    });
     socket.on("notificarVotaciones", (datos) => {
             const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
             if (dash) {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("notificarVotaciones", datos.info));
             }
-        });
+    });
 
     socket.on("respuestaVotacionRapida", (datos) => {
             const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
@@ -250,7 +250,7 @@ io.on("connection", (socket) => {
                 // tslint:disable-next-line:max-line-length
                 dash.forEach((elem) => elem.s.emit("respuestaVotacionRapida", datos.info));
             }
-        });
+    });
 
     socket.on("respuestaCuestionarioRapido", (datos) => {
             console.log("recibo respuesta cuestionario rapido");
@@ -260,7 +260,7 @@ io.on("connection", (socket) => {
                 dash.forEach((elem) => elem.s.emit("respuestaCuestionarioRapido", datos.info));
             }
 
-        });
+    });
 
     socket.on("turnoElegido", (datos) => {
             console.log("recibo turno elegido");
@@ -271,12 +271,12 @@ io.on("connection", (socket) => {
                 dash.forEach((elem) => elem.s.emit("turnoElegido", datos.info));
             }
 
-        });
+    });
 
     socket.on("'disconnect'", (res) => {
             console.log("Se desconecta el cliente ");
 
-        });
+    });
 
         // Notificaciones para los alumnos
 
@@ -290,7 +290,7 @@ io.on("connection", (socket) => {
                 console.log("envio notificacion de turno cogido a ");
                 conectado.soc.emit("turnoCogido", info.turno);
             });
-        });
+    });
 
         // Notificación para alumnos de un juego rápido
     socket.on("notificacionTurnoNuevo", (info) => {
@@ -300,7 +300,7 @@ io.on("connection", (socket) => {
             conectadosJuegoRapido.forEach((conectado) => {
                 conectado.soc.emit("turnoNuevo", info.turno);
             });
-        });
+    });
 
         // Notificación para un alumno
     socket.on("notificacionIndividual", (info) => {
@@ -338,6 +338,7 @@ io.on("connection", (socket) => {
                     }
                 });
         });
+    });
 
         // Notificaciones para los alumnos de un grupo
     socket.on("notificacionGrupo", (info) => {
@@ -389,7 +390,7 @@ io.on("connection", (socket) => {
                     console.log("error");
                     console.log(error);
                 });
-        });
+    });
 
         // Para enviar la respuesta del alumno en Modalidad Kahoot al Dashboard
     socket.on("respuestaAlumnoKahoot", (datos) => {
@@ -400,7 +401,7 @@ io.on("connection", (socket) => {
                 console.log("Envio Respuesta al profesor:", datos);
                 socket.s.emit("respuestaAlumnoKahoot", datos);
             });
-        });
+    });
 
         // Para enviar la conexión del alumno al juego en Modalidad Kahoot al Dashboard
     socket.on("conexionAlumnoKahoot", (datos) => {
@@ -411,7 +412,7 @@ io.on("connection", (socket) => {
                 console.log("Envio Respuesta al profesor:", socket.pId);
                 socket.s.emit("conexionAlumnoKahoot", datos.alumnoId);
             });
-        });
+    });
 
     socket.on("confirmacionPreparadoParaKahoot", (datos) => {
         console.log("Confirma preparado para kahoot", datos);
@@ -510,4 +511,5 @@ io.on("connection", (socket) => {
 
 server.listen(port, () => {
         console.log(`started on port: ${port}`);
-    });
+});
+
