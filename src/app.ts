@@ -43,7 +43,25 @@ let alumnosConectados: any[] = [];
 
 let registroNotificacionesJuegos: any[] = [];
 let socketsDashboards: any[] = [];
+
+
+//Lista de Notificaciones Pendientes (guardadas en memoria del Servidor)
+const notificacionesPendientes: any[] = []; //{ alumnoID, mensaje }
+
+// try {
+//     axios.get().then ((respuesta) => {
+//       console.log (respuesta.data);
+//     });
+// } catch {
+//     console.log ("Error");
+// }
+
+
+
+
+
 const conectados: any[] = [];
+
 
 io.on("connection", (socket) => {
 
@@ -90,7 +108,21 @@ io.on("connection", (socket) => {
     socket.on("alumnoConectado", (alumno) => {
         console.log ("se conecta un alumno");
         console.log (alumno);
-        alumnosConectados.push ({id: alumno.id, soc: socket});
+
+        if(!alumnosConectados.includes({id: alumno.id, soc: socket})){ //Para evitar conexiones repetidas (Reconexión por caída de red en dispositivos móviles)
+            alumnosConectados.push ({id: alumno.id, soc: socket});
+            
+            //Comprobar si tiene notificaciones pendientes
+            for (let i: number = 0; i < notificacionesPendientes.length; i++){
+                if(notificacionesPendientes[i].alumnoID === alumno.id){
+                    console.log("envio notificación al alumno " + notificacionesPendientes[i].alumnoID);
+                    socket.emit("notificacion", notificacionesPendientes[i].mensaje);
+
+                    //Eliminar la notificacion para que no le salga al Alumno cada vez que se conecta
+                    notificacionesPendientes.splice(i, 1);
+                }
+            }
+        }
     });
 
     // socket.on("alumnoDesconectado", (alumno) => {
@@ -272,54 +304,68 @@ io.on("connection", (socket) => {
 
         // Notificación para un alumno
     socket.on("notificacionIndividual", (info) => {
-            console.log("Recibo notificacion para alumno ", info);
-            const conectado = alumnosConectados.filter((con) => con.id === info.alumnoId)[0];
-            if (conectado !== undefined) {
-                console.log("envio notificación al alumno " + info.alumnoId);
-                conectado.soc.emit("notificacion", info.mensaje);
-            }
-        });
-        // Notificaciones para los alumnos de un equipo
+        console.log("Recibo notificacion para alumno ", info);
+        const conectado = alumnosConectados.filter ((con) => con.id === info.alumnoId)[0];
+        if (conectado !== undefined) {
+            console.log ("envio notificación al alumno " + info.alumnoId);
+            conectado.soc.emit ("notificacion", info.mensaje);
+        }
+        else {
+            //Guardar la notificación pendiente, para mostrarla cuando se vuelva a conectar
+            notificacionesPendientes.push({ alumnoID: info.alumnoId, mensaje: info.mensaje });
+            //console.log(info.mensaje, "\nNo llega al Alumno esta notificación porque está desconectado");
+        }
+    });
+
+    // Notificaciones para los alumnos de un equipo
     socket.on("notificacionEquipo", (info) => {
-            console.log("Recibo notificacion para equipo ", info);
-            peticionesAPI.DameAlumnosEquipo(info.equipoId)
-                .then((res) => {
-                    const alumnos = res.data;
-                    console.log("Alumnos del equipo");
-                    console.log(alumnos);
-                    alumnos.forEach((alumno) => {
-                        const conectado = alumnosConectados.filter((con) => con.id === alumno.id)[0];
-                        if (conectado !== undefined) {
-                            console.log("envio notificación al alumno " + alumno.id);
-                            conectado.soc.emit("notificacion", info.mensaje);
-                        }
-                    });
-                }).catch((error) => {
-                    console.log("error");
-                    console.log(error);
+        console.log("Recibo notificacion para equipo ", info);
+        peticionesAPI.DameAlumnosEquipo (info.equipoId)
+        .then ((res) => {
+                const alumnos = res.data;
+                console.log ("Alumnos del equipo");
+                console.log (alumnos);
+                alumnos.forEach((alumno) => {
+                    const conectado = alumnosConectados.filter ((con) => con.id === alumno.id)[0];
+                    if (conectado !== undefined) {
+                        console.log ("envio notificación al alumno " + alumno.id);
+                        conectado.soc.emit ("notificacion", info.mensaje);
+                    }
+                    else {
+                        //Guardar la notificación pendiente, para mostrarla cuando se vuelva a conectar
+                        notificacionesPendientes.push({ alumnoID: alumno.id, mensaje: info.mensaje });
+                        //console.log(info.mensaje, "\nNo llega al Alumno esta notificación porque está desconectado");
+                    }
                 });
         });
 
         // Notificaciones para los alumnos de un grupo
     socket.on("notificacionGrupo", (info) => {
-            console.log("Recibo notificacion para el grupo ", info);
-            peticionesAPI.DameAlumnosGrupo(info.grupoId)
-                .then((res) => {
-                    const alumnos = res.data;
-                    console.log("Alumnos del grupo");
-                    console.log(alumnos);
-                    alumnos.forEach((alumno) => {
-                        const conectado = alumnosConectados.filter((con) => con.id === alumno.id)[0];
-                        if (conectado !== undefined) {
-                            console.log("envio notificación al alumno " + alumno.id);
-                            conectado.soc.emit("notificacion", info.mensaje);
-                        }
-                    });
-                }).catch((error) => {
-                    console.log("error");
-                    console.log(error);
+
+        console.log("Recibo notificacion para el grupo ", info);
+        peticionesAPI.DameAlumnosGrupo (info.grupoId)
+        .then ((res) => {
+                const alumnos = res.data;
+                console.log ("Alumnos del grupo");
+                console.log (alumnos);
+                alumnos.forEach((alumno) => {
+                    const conectado = alumnosConectados.filter ((con) => con.id === alumno.id)[0];
+                    if (conectado !== undefined) {
+                        console.log ("envio notificación al alumno " + alumno.id);
+                        conectado.soc.emit ("notificacion", info.mensaje);
+                    }
+                    else {
+                        //Guardar la notificación pendiente, para mostrarla cuando se vuelva a conectar
+                        notificacionesPendientes.push({ alumnoID: alumno.id, mensaje: info.mensaje });
+                        //console.log(info.mensaje, "\nNo llega al Alumno esta notificación porque está desconectado");
+                    }
                 });
-        });
+        }).catch ((error) => {
+            console.log ("error");
+            console.log (error);
+
+         });
+     });
 
         // Para avanzar pregunta
     socket.on("avanzarPregunta", (info) => {
