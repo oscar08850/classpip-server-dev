@@ -30,6 +30,7 @@ let dashSocket;
 let alumnosConectados = [];
 let registroNotificacionesJuegos = [];
 let socketsDashboards = [];
+let nicksUsados = [];
 //Lista de Notificaciones Pendientes (guardadas en memoria del Servidor)
 const notificacionesPendientes = []; //{ alumnoID, mensaje }
 // try {
@@ -112,24 +113,46 @@ io.on("connection", (socket) => {
     socket.on("nickNameJuegoRapido", (datos) => {
         console.log("recibo nick");
         console.log(datos);
-        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
-        if (dash) {
-            console.log("envio notificacion");
-            // tslint:disable-next-line:max-line-length
-            dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
+        console.log('nicks usados', nicksUsados);
+        // en datos tengo nick (en info) y profesorId
+        if (nicksUsados.some((elem) => elem.info === datos.info)) {
+            // El nick está en uso
+            socket.emit("confirmacion nick", "nick usado");
+        }
+        else {
+            socket.emit("confirmacion nick", "nick admitido");
+            nicksUsados.push(datos);
+            const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+            if (dash) {
+                console.log("envio notificacion");
+                // tslint:disable-next-line:max-line-length
+                dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
+            }
         }
     });
     // Cuando en el juego rapido los alumnos reciben notificaciones se llama a esta función para que se registre el alumno
     socket.on("nickNameJuegoRapidoYRegistro", (datos) => {
         console.log("recibo nick");
         console.log(datos);
-        // guardo el socket y la clave del juego
-        registroNotificacionesJuegos.push({ soc: socket, c: datos.c });
-        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
-        if (dash) {
-            // tslint:disable-next-line:max-line-length
-            dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
+        if (nicksUsados.some((elem) => elem.info === datos.info)) {
+            // El nick está en uso
+            socket.emit("confirmacion nick", "nick usado");
         }
+        else {
+            socket.emit("confirmacion nick", "nick admitido");
+            nicksUsados.push(datos);
+            // guardo el socket y la clave del juego
+            registroNotificacionesJuegos.push({ soc: socket, c: datos.c });
+            const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+            if (dash) {
+                // tslint:disable-next-line:max-line-length
+                dash.forEach((elem) => elem.s.emit("nickNameJuegoRapido", datos.info));
+            }
+        }
+    });
+    // Cuando acabe el juego rapido el dash enviará este mensaje con profesorId para que limpiemos la lista de nicks de ese profe
+    socket.on("finJuegoRapido", (profesorId) => {
+        nicksUsados = nicksUsados.filter((elem) => elem.profesorId !== profesorId);
     });
     socket.on("respuestaEncuestaRapida", (datos) => {
         const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
