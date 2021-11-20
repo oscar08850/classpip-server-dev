@@ -228,6 +228,13 @@ io.on("connection", (socket) => {
             dash.forEach((elem) => elem.s.emit("respuestaVotacionRapida", datos.info));
         }
     });
+    socket.on("respuestaVotacionAOpciones", (datos) => {
+        const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
+        if (dash) {
+            // tslint:disable-next-line:max-line-length
+            dash.forEach((elem) => elem.s.emit("respuestaVotacionAOpciones", datos.info));
+        }
+    });
     socket.on("respuestaCuestionarioRapido", (datos) => {
         console.log("recibo respuesta cuestionario rapido");
         const dash = socketsDashboards.filter((elem) => elem.pId === datos.profesorId);
