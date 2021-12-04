@@ -12,8 +12,8 @@ class EnviarEmailService {
     EnviarEmail() {
         const transporter = nodemailer.createTransport({
             auth: {
-                user: 'classpip@gmail.com',
-                pass: 'Classpip@2016' // Cambialo por tu password
+                user: 'classpipupc@gmail.com',
+                pass: 'mimara00.' // Cambialo por tu password
             },
             service: "gmail",
         });
