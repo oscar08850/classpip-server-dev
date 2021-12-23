@@ -461,7 +461,7 @@ io.on("connection", (socket) => {
         });
     });
 
-    // Notificación para alumnos de un juego Kahoot de grupo
+    // Notificación para alumnos de un juego Kahoot de grupo: lanzar siguiente pregunta
     socket.on("lanzarSiguientePreguntaGrupo", (info) => {
         // Saco los elementos de la lista correspondientes a los jugadores conectados a ese grupo
 
@@ -473,6 +473,25 @@ io.on("connection", (socket) => {
                     if (conectado !== undefined) {
                         console.log("envio notificación al alumno " + alumno.id);
                         conectado.soc.emit ("lanzarSiguientePregunta", info.opcionesDesordenadas);
+                    }
+                });
+            }).catch((error) => {
+                console.log("error");
+                console.log(error);
+            });
+    });
+    // Notificación para alumnos de un juego Kahoot de grupo: panel abierto
+    socket.on("panelAbierto", (grupoId) => {
+        // Saco los elementos de la lista correspondientes a los jugadores conectados a ese grupo
+
+        peticionesAPI.DameAlumnosGrupo(grupoId)
+            .then((res) => {
+                const alumnos = res.data;
+                alumnos.forEach((alumno) => {
+                    const conectado = alumnosConectados.filter((con) => con.id === alumno.id)[0];
+                    if (conectado !== undefined) {
+                        console.log("envio notificación al alumno " + alumno.id);
+                        conectado.soc.emit ("panelAbierto");
                     }
                 });
             }).catch((error) => {
